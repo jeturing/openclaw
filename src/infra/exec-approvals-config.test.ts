@@ -100,6 +100,29 @@ describe("exec approvals node host allowlist check", () => {
     }
   });
 
+  it("does not match paths that differ only in regex-special characters in the allowlist pattern", () => {
+    // Regression: broken escape regex caused dots (and other special chars) in
+    // allowlist patterns to act as regex wildcards, letting crafted paths bypass the check.
+    // e.g. "/usr/bin/python3.11" allowlist should NOT match "/usr/bin/python3X11".
+    const entries: ExecAllowlistEntry[] = [{ pattern: "/usr/bin/python3.11" }];
+
+    // Exact match should still pass
+    const exactMatch = matchAllowlist(entries, {
+      rawExecutable: "python3.11",
+      resolvedPath: "/usr/bin/python3.11",
+      executableName: "python3.11",
+    });
+    expect(exactMatch?.pattern).toBe("/usr/bin/python3.11");
+
+    // Path where '.' matches a different char should be rejected
+    const bypassAttempt = matchAllowlist(entries, {
+      rawExecutable: "python3X11",
+      resolvedPath: "/usr/bin/python3X11",
+      executableName: "python3X11",
+    });
+    expect(bypassAttempt).toBeNull();
+  });
+
   it("does not treat unknown tools as safe bins", () => {
     const resolution = {
       rawExecutable: "unknown-tool",
