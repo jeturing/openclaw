@@ -184,7 +184,7 @@ function globToRegExp(pattern: string): RegExp {
       i += 1;
       continue;
     }
-    regex += ch.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&");
+    regex += ch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     i += 1;
   }
   regex += "$";
